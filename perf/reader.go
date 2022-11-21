@@ -14,6 +14,7 @@ import (
 	"github.com/cilium/ebpf/internal"
 	"github.com/cilium/ebpf/internal/epoll"
 	"github.com/cilium/ebpf/internal/unix"
+	"github.com/cilium/ebpf/perf/raw"
 )
 
 var (
@@ -145,9 +146,9 @@ type Reader struct {
 	// Closing a PERF_EVENT_ARRAY removes all event fds
 	// stored in it, so we keep a reference alive.
 	array       *ebpf.Map
-	rings       []*EventRing
+	rings       []*raw.EventRing
 	epollEvents []unix.EpollEvent
-	epollRings  []*EventRing
+	epollRings  []*raw.EventRing
 	eventHeader []byte
 
 	// pauseFds are a copy of the fds in 'rings', protected by 'pauseMu'.
@@ -183,7 +184,7 @@ func NewReaderWithOptions(array *ebpf.Map, perCPUBuffer int, opts ReaderOptions)
 
 	var (
 		nCPU     = int(array.MaxEntries())
-		rings    = make([]*EventRing, 0, nCPU)
+		rings    = make([]*raw.EventRing, 0, nCPU)
 		pauseFds = make([]int, 0, nCPU)
 	)
 
@@ -207,7 +208,7 @@ func NewReaderWithOptions(array *ebpf.Map, perCPUBuffer int, opts ReaderOptions)
 	// but doesn't allow using a wildcard like -1 to specify "all CPUs".
 	// Hence we have to create a ring for each CPU.
 	for i := 0; i < nCPU; i++ {
-		ring, err := newPerfEventRing(i, perCPUBuffer, opts.Watermark)
+		ring, err := raw.NewPerfEventRing(i, perCPUBuffer, opts.Watermark)
 		if errors.Is(err, unix.ENODEV) {
 			// The requested CPU is currently offline, skip it.
 			rings = append(rings, nil)
@@ -237,7 +238,7 @@ func NewReaderWithOptions(array *ebpf.Map, perCPUBuffer int, opts ReaderOptions)
 		poller:      poller,
 		deadline:    time.Time{},
 		epollEvents: make([]unix.EpollEvent, len(rings)),
-		epollRings:  make([]*EventRing, 0, len(rings)),
+		epollRings:  make([]*raw.EventRing, 0, len(rings)),
 		eventHeader: make([]byte, perfEventHeaderSize),
 		pauseFds:    pauseFds,
 	}
@@ -396,7 +397,7 @@ func (pr *Reader) Resume() error {
 }
 
 // NB: Has to be preceded by a call to ring.LoadHead.
-func (pr *Reader) readRecordFromRing(rec *Record, ring *EventRing) error {
+func (pr *Reader) readRecordFromRing(rec *Record, ring *raw.EventRing) error {
 	defer ring.WriteTail()
 
 	rec.CPU = ring.Cpu

@@ -1,4 +1,4 @@
-package perf
+package raw
 
 import (
 	"errors"
@@ -22,7 +22,7 @@ type EventRing struct {
 	*ringReader
 }
 
-func newPerfEventRing(cpu, perCPUBuffer, watermark int) (*EventRing, error) {
+func NewPerfEventRing(cpu, perCPUBuffer, watermark int) (*EventRing, error) {
 	if watermark >= perCPUBuffer {
 		return nil, errors.New("watermark must be smaller than perCPUBuffer")
 	}
