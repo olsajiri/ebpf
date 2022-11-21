@@ -156,6 +156,9 @@ type Reader struct {
 	// Read calls, which would otherwise need to be interrupted.
 	pauseMu  sync.Mutex
 	pauseFds []int
+
+	// base reader
+	*raw.Reader
 }
 
 // ReaderOptions control the behaviour of the user
@@ -241,6 +244,10 @@ func NewReaderWithOptions(array *ebpf.Map, perCPUBuffer int, opts ReaderOptions)
 		epollRings:  make([]*raw.EventRing, 0, len(rings)),
 		eventHeader: make([]byte, perfEventHeaderSize),
 		pauseFds:    pauseFds,
+	}
+	pr.Reader, err = raw.NewReader()
+	if err != nil {
+		return nil, err
 	}
 	if err = pr.Resume(); err != nil {
 		return nil, err
