@@ -14,7 +14,6 @@ import (
 	"github.com/cilium/ebpf/asm"
 	"github.com/cilium/ebpf/internal"
 	"github.com/cilium/ebpf/internal/testutils"
-	"github.com/cilium/ebpf/internal/unix"
 
 	qt "github.com/frankban/quicktest"
 )
@@ -296,14 +295,6 @@ func TestPerfReaderClose(t *testing.T) {
 	if _, err := rd.Read(); err == nil {
 		t.Fatal("Read on a closed PerfReader doesn't return an error")
 	}
-}
-
-func TestCreatePerfEvent(t *testing.T) {
-	fd, err := createPerfEvent(0, 1)
-	if err != nil {
-		t.Fatal("Can't create perf event:", err)
-	}
-	unix.Close(fd)
 }
 
 func TestReadRecord(t *testing.T) {

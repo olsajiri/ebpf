@@ -106,3 +106,11 @@ func TestPerfEventRing(t *testing.T) {
 	// large buffer not a multiple of page size at all (prime)
 	check(65537, 8192)
 }
+
+func TestCreatePerfEvent(t *testing.T) {
+	fd, err := createPerfEvent(0, 1)
+	if err != nil {
+		t.Fatal("Can't create perf event:", err)
+	}
+	unix.Close(fd)
+}
