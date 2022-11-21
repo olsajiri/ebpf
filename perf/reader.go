@@ -329,7 +329,7 @@ func (pr *Reader) ReadInto(rec *Record) error {
 				// Read the current head pointer now, not every time
 				// we read a record. This prevents a single fast producer
 				// from keeping the reader busy.
-				ring.loadHead()
+				ring.LoadHead()
 			}
 		}
 
@@ -395,9 +395,9 @@ func (pr *Reader) Resume() error {
 	return nil
 }
 
-// NB: Has to be preceded by a call to ring.loadHead.
+// NB: Has to be preceded by a call to ring.LoadHead.
 func (pr *Reader) readRecordFromRing(rec *Record, ring *EventRing) error {
-	defer ring.writeTail()
+	defer ring.WriteTail()
 
 	rec.CPU = ring.Cpu
 	return readRecord(ring, rec, pr.eventHeader)

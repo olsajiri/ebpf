@@ -125,11 +125,11 @@ func newRingReader(meta *unix.PerfEventMmapPage, ring []byte) *ringReader {
 	}
 }
 
-func (rr *ringReader) loadHead() {
+func (rr *ringReader) LoadHead() {
 	rr.head = atomic.LoadUint64(&rr.meta.Data_head)
 }
 
-func (rr *ringReader) writeTail() {
+func (rr *ringReader) WriteTail() {
 	// Commit the new tail. This lets the kernel know that
 	// the ring buffer has been consumed.
 	atomic.StoreUint64(&rr.meta.Data_tail, rr.tail)
