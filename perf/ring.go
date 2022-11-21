@@ -13,16 +13,16 @@ import (
 	"github.com/cilium/ebpf/internal/unix"
 )
 
-// perfEventRing is a page of metadata followed by
+// EventRing is a page of metadata followed by
 // a variable number of pages which form a ring buffer.
-type perfEventRing struct {
+type EventRing struct {
 	fd   int
 	cpu  int
 	mmap []byte
 	*ringReader
 }
 
-func newPerfEventRing(cpu, perCPUBuffer, watermark int) (*perfEventRing, error) {
+func newPerfEventRing(cpu, perCPUBuffer, watermark int) (*EventRing, error) {
 	if watermark >= perCPUBuffer {
 		return nil, errors.New("watermark must be smaller than perCPUBuffer")
 	}
@@ -49,13 +49,13 @@ func newPerfEventRing(cpu, perCPUBuffer, watermark int) (*perfEventRing, error) 
 	// documentation, since a byte is smaller than sampledPerfEvent.
 	meta := (*unix.PerfEventMmapPage)(unsafe.Pointer(&mmap[0]))
 
-	ring := &perfEventRing{
+	ring := &EventRing{
 		fd:         fd,
 		cpu:        cpu,
 		mmap:       mmap,
 		ringReader: newRingReader(meta, mmap[meta.Data_offset:meta.Data_offset+meta.Data_size]),
 	}
-	runtime.SetFinalizer(ring, (*perfEventRing).Close)
+	runtime.SetFinalizer(ring, (*EventRing).Close)
 
 	return ring, nil
 }
@@ -76,7 +76,7 @@ func perfBufferSize(perCPUBuffer int) int {
 	return nPages * pageSize
 }
 
-func (ring *perfEventRing) Close() {
+func (ring *EventRing) Close() {
 	runtime.SetFinalizer(ring, nil)
 
 	_ = unix.Close(ring.fd)

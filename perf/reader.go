@@ -145,9 +145,9 @@ type Reader struct {
 	// Closing a PERF_EVENT_ARRAY removes all event fds
 	// stored in it, so we keep a reference alive.
 	array       *ebpf.Map
-	rings       []*perfEventRing
+	rings       []*EventRing
 	epollEvents []unix.EpollEvent
-	epollRings  []*perfEventRing
+	epollRings  []*EventRing
 	eventHeader []byte
 
 	// pauseFds are a copy of the fds in 'rings', protected by 'pauseMu'.
@@ -183,7 +183,7 @@ func NewReaderWithOptions(array *ebpf.Map, perCPUBuffer int, opts ReaderOptions)
 
 	var (
 		nCPU     = int(array.MaxEntries())
-		rings    = make([]*perfEventRing, 0, nCPU)
+		rings    = make([]*EventRing, 0, nCPU)
 		pauseFds = make([]int, 0, nCPU)
 	)
 
@@ -237,7 +237,7 @@ func NewReaderWithOptions(array *ebpf.Map, perCPUBuffer int, opts ReaderOptions)
 		poller:      poller,
 		deadline:    time.Time{},
 		epollEvents: make([]unix.EpollEvent, len(rings)),
-		epollRings:  make([]*perfEventRing, 0, len(rings)),
+		epollRings:  make([]*EventRing, 0, len(rings)),
 		eventHeader: make([]byte, perfEventHeaderSize),
 		pauseFds:    pauseFds,
 	}
@@ -396,7 +396,7 @@ func (pr *Reader) Resume() error {
 }
 
 // NB: Has to be preceded by a call to ring.loadHead.
-func (pr *Reader) readRecordFromRing(rec *Record, ring *perfEventRing) error {
+func (pr *Reader) readRecordFromRing(rec *Record, ring *EventRing) error {
 	defer ring.writeTail()
 
 	rec.CPU = ring.cpu
