@@ -219,9 +219,9 @@ func NewReaderWithOptions(array *ebpf.Map, perCPUBuffer int, opts ReaderOptions)
 			return nil, fmt.Errorf("failed to create perf ring for CPU %d: %v", i, err)
 		}
 		rings = append(rings, ring)
-		pauseFds = append(pauseFds, ring.fd)
+		pauseFds = append(pauseFds, ring.Fd)
 
-		if err := poller.Add(ring.fd, i); err != nil {
+		if err := poller.Add(ring.Fd, i); err != nil {
 			return nil, err
 		}
 	}
@@ -399,7 +399,7 @@ func (pr *Reader) Resume() error {
 func (pr *Reader) readRecordFromRing(rec *Record, ring *EventRing) error {
 	defer ring.writeTail()
 
-	rec.CPU = ring.cpu
+	rec.CPU = ring.Cpu
 	return readRecord(ring, rec, pr.eventHeader)
 }
 

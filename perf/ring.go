@@ -16,8 +16,8 @@ import (
 // EventRing is a page of metadata followed by
 // a variable number of pages which form a ring buffer.
 type EventRing struct {
-	fd   int
-	cpu  int
+	Fd   int
+	Cpu  int
 	mmap []byte
 	*ringReader
 }
@@ -50,8 +50,8 @@ func newPerfEventRing(cpu, perCPUBuffer, watermark int) (*EventRing, error) {
 	meta := (*unix.PerfEventMmapPage)(unsafe.Pointer(&mmap[0]))
 
 	ring := &EventRing{
-		fd:         fd,
-		cpu:        cpu,
+		Fd:         fd,
+		Cpu:        cpu,
 		mmap:       mmap,
 		ringReader: newRingReader(meta, mmap[meta.Data_offset:meta.Data_offset+meta.Data_size]),
 	}
@@ -79,10 +79,10 @@ func perfBufferSize(perCPUBuffer int) int {
 func (ring *EventRing) Close() {
 	runtime.SetFinalizer(ring, nil)
 
-	_ = unix.Close(ring.fd)
+	_ = unix.Close(ring.Fd)
 	_ = unix.Munmap(ring.mmap)
 
-	ring.fd = -1
+	ring.Fd = -1
 	ring.mmap = nil
 }
 
