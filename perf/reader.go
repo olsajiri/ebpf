@@ -135,8 +135,7 @@ func readRawSample(rd io.Reader, buf, sampleBuf []byte) ([]byte, error) {
 // Reader allows reading bpf_perf_event_output
 // from user space.
 type Reader struct {
-	poller   *epoll.Poller
-	deadline time.Time
+	poller *epoll.Poller
 
 	// mu protects read/write access to the Reader structure with the
 	// exception of 'pauseFds', which is protected by 'pauseMu'.
@@ -239,7 +238,6 @@ func NewReaderWithOptions(array *ebpf.Map, perCPUBuffer int, opts ReaderOptions)
 		array:       array,
 		rings:       rings,
 		poller:      poller,
-		deadline:    time.Time{},
 		epollEvents: make([]unix.EpollEvent, len(rings)),
 		epollRings:  make([]*raw.EventRing, 0, len(rings)),
 		eventHeader: make([]byte, perfEventHeaderSize),
@@ -294,7 +292,7 @@ func (pr *Reader) SetDeadline(t time.Time) {
 	pr.mu.Lock()
 	defer pr.mu.Unlock()
 
-	pr.deadline = t
+	pr.Reader.SetDeadline(t)
 }
 
 // Read the next record from the perf ring buffer.
@@ -325,7 +323,7 @@ func (pr *Reader) ReadInto(rec *Record) error {
 
 	for {
 		if len(pr.epollRings) == 0 {
-			nEvents, err := pr.poller.Wait(pr.epollEvents, pr.deadline)
+			nEvents, err := pr.poller.Wait(pr.epollEvents, pr.GetDeadline())
 			if err != nil {
 				return err
 			}
