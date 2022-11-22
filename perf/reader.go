@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"runtime"
 	"sync"
 	"time"
@@ -15,11 +14,6 @@ import (
 	"github.com/cilium/ebpf/internal/epoll"
 	"github.com/cilium/ebpf/internal/unix"
 	"github.com/cilium/ebpf/perf/raw"
-)
-
-var (
-	ErrClosed = os.ErrClosed
-	errEOR    = errors.New("end of ring")
 )
 
 var perfEventHeaderSize = binary.Size(perfEventHeader{})
@@ -59,7 +53,7 @@ func readRecord(rd io.Reader, rec *Record, buf []byte) error {
 	buf = buf[:perfEventHeaderSize]
 	_, err := io.ReadFull(rd, buf)
 	if errors.Is(err, io.EOF) {
-		return errEOR
+		return raw.ErrEOR
 	} else if err != nil {
 		return fmt.Errorf("read perf event header: %v", err)
 	}
@@ -262,7 +256,7 @@ func NewReaderWithOptions(array *ebpf.Map, perCPUBuffer int, opts ReaderOptions)
 // ENOENT after calling this method.
 func (pr *Reader) Close() error {
 	if err := pr.poller.Close(); err != nil {
-		if errors.Is(err, os.ErrClosed) {
+		if errors.Is(err, raw.ErrClosed) {
 			return nil
 		}
 		return fmt.Errorf("close poller: %w", err)
@@ -318,7 +312,7 @@ func (pr *Reader) ReadInto(rec *Record) error {
 	defer pr.mu.Unlock()
 
 	if pr.rings == nil {
-		return fmt.Errorf("perf ringbuffer: %w", ErrClosed)
+		return fmt.Errorf("perf ringbuffer: %w", raw.ErrClosed)
 	}
 
 	for {
@@ -343,7 +337,7 @@ func (pr *Reader) ReadInto(rec *Record) error {
 		// process them doesn't matter, and starting at the back allows
 		// resizing epollRings to keep track of processed rings.
 		err := pr.readRecordFromRing(rec, pr.epollRings[len(pr.epollRings)-1])
-		if err == errEOR {
+		if err == raw.ErrEOR {
 			// We've emptied the current ring buffer, process
 			// the next one.
 			pr.epollRings = pr.epollRings[:len(pr.epollRings)-1]
@@ -365,7 +359,7 @@ func (pr *Reader) Pause() error {
 	defer pr.pauseMu.Unlock()
 
 	if pr.pauseFds == nil {
-		return fmt.Errorf("%w", ErrClosed)
+		return fmt.Errorf("%w", raw.ErrClosed)
 	}
 
 	for i := range pr.pauseFds {
@@ -385,7 +379,7 @@ func (pr *Reader) Resume() error {
 	defer pr.pauseMu.Unlock()
 
 	if pr.pauseFds == nil {
-		return fmt.Errorf("%w", ErrClosed)
+		return fmt.Errorf("%w", raw.ErrClosed)
 	}
 
 	for i, fd := range pr.pauseFds {

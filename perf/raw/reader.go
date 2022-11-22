@@ -1,6 +1,15 @@
 package raw
 
-import "time"
+import (
+	"errors"
+	"os"
+	"time"
+)
+
+var (
+	ErrClosed = os.ErrClosed
+	ErrEOR    = errors.New("end of ring")
+)
 
 type Reader struct {
 	deadline time.Time

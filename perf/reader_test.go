@@ -14,6 +14,7 @@ import (
 	"github.com/cilium/ebpf/asm"
 	"github.com/cilium/ebpf/internal"
 	"github.com/cilium/ebpf/internal/testutils"
+	"github.com/cilium/ebpf/perf/raw"
 
 	qt "github.com/frankban/quicktest"
 )
@@ -388,12 +389,12 @@ func TestPause(t *testing.T) {
 
 	// Pause/Resume after close should be no-op.
 	err = rd.Pause()
-	qt.Assert(t, err, qt.Not(qt.Equals), ErrClosed, qt.Commentf("returns unwrapped ErrClosed"))
-	qt.Assert(t, errors.Is(err, ErrClosed), qt.IsTrue, qt.Commentf("doesn't wrap ErrClosed"))
+	qt.Assert(t, err, qt.Not(qt.Equals), raw.ErrClosed, qt.Commentf("returns unwrapped ErrClosed"))
+	qt.Assert(t, errors.Is(err, raw.ErrClosed), qt.IsTrue, qt.Commentf("doesn't wrap ErrClosed"))
 
 	err = rd.Resume()
-	qt.Assert(t, err, qt.Not(qt.Equals), ErrClosed, qt.Commentf("returns unwrapped ErrClosed"))
-	qt.Assert(t, errors.Is(err, ErrClosed), qt.IsTrue, qt.Commentf("doesn't wrap ErrClosed"))
+	qt.Assert(t, err, qt.Not(qt.Equals), raw.ErrClosed, qt.Commentf("returns unwrapped ErrClosed"))
+	qt.Assert(t, errors.Is(err, raw.ErrClosed), qt.IsTrue, qt.Commentf("doesn't wrap ErrClosed"))
 }
 
 func BenchmarkReader(b *testing.B) {
