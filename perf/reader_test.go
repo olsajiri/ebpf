@@ -307,7 +307,7 @@ func TestReadRecord(t *testing.T) {
 	}
 
 	var rec Record
-	err = readRecord(&buf, &rec, make([]byte, perfEventHeaderSize))
+	err = readRecord(&buf, eventCbData{&rec, make([]byte, perfEventHeaderSize)}, 0)
 	if !IsUnknownEvent(err) {
 		t.Error("readRecord should return unknown event error, got", err)
 	}
