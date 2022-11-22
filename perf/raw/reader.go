@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/cilium/ebpf/internal/epoll"
@@ -18,6 +19,11 @@ var (
 )
 
 type Reader struct {
+	// mu protects read/write access to the Reader structure with the
+	// exception of 'pauseFds', which is protected by 'pauseMu'.
+	// If locking both 'mu' and 'pauseMu', 'mu' must be locked first.
+	mu sync.Mutex
+
 	deadline    time.Time
 	poller      *epoll.Poller
 	rings       []*EventRing
@@ -89,6 +95,11 @@ func (pr *Reader) Close() error {
 		return fmt.Errorf("close poller: %w", err)
 	}
 
+	// Trying to poll will now fail, so Read() can't block anymore. Acquire the
+	// lock so that we can clean up.
+	pr.mu.Lock()
+	defer pr.mu.Unlock()
+
 	for _, ring := range pr.rings {
 		if ring != nil {
 			ring.Close()
@@ -100,6 +111,8 @@ func (pr *Reader) Close() error {
 }
 
 func (pr *Reader) SetDeadline(t time.Time) {
+	pr.mu.Lock()
+	defer pr.mu.Unlock()
 	pr.deadline = t
 }
 
@@ -110,13 +123,16 @@ func (pr *Reader) GetDeadline() time.Time {
 type EventCb func(rd io.Reader, data interface{}, cpu int) error
 
 func (pr *Reader) ReadData(cb EventCb, data interface{}) error {
+	pr.mu.Lock()
+	defer pr.mu.Unlock()
+
 	if pr.rings == nil {
 		return fmt.Errorf("perf ringbuffer: %w", ErrClosed)
 	}
 
 	for {
 		if len(pr.epollRings) == 0 {
-			nEvents, err := pr.poller.Wait(pr.epollEvents, pr.deadline)
+			nEvents, err := pr.poller.Wait(pr.epollEvents, pr.GetDeadline())
 			if err != nil {
 				return err
 			}

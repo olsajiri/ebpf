@@ -136,11 +136,6 @@ func readRawSample(rd io.Reader, buf, sampleBuf []byte) ([]byte, error) {
 // Reader allows reading bpf_perf_event_output
 // from user space.
 type Reader struct {
-	// mu protects read/write access to the Reader structure with the
-	// exception of 'pauseFds', which is protected by 'pauseMu'.
-	// If locking both 'mu' and 'pauseMu', 'mu' must be locked first.
-	mu sync.Mutex
-
 	// Closing a PERF_EVENT_ARRAY removes all event fds
 	// stored in it, so we keep a reference alive.
 	array       *ebpf.Map
@@ -208,11 +203,6 @@ func NewReaderWithOptions(array *ebpf.Map, perCPUBuffer int, opts ReaderOptions)
 // Calls to perf_event_output from eBPF programs will return
 // ENOENT after calling this method.
 func (pr *Reader) Close() error {
-	// Trying to poll will now fail, so Read() can't block anymore. Acquire the
-	// lock so that we can clean up.
-	pr.mu.Lock()
-	defer pr.mu.Unlock()
-
 	if err := pr.Reader.Close(); err != nil {
 		return err
 	}
@@ -226,9 +216,6 @@ func (pr *Reader) Close() error {
 //
 // Passing a zero time.Time will remove the deadline.
 func (pr *Reader) SetDeadline(t time.Time) {
-	pr.mu.Lock()
-	defer pr.mu.Unlock()
-
 	pr.Reader.SetDeadline(t)
 }
 
@@ -251,16 +238,12 @@ func (pr *Reader) Read() (Record, error) {
 
 // ReadInto is like Read except that it allows reusing Record and associated buffers.
 func (pr *Reader) ReadInto(rec *Record) error {
-	pr.mu.Lock()
-	defer pr.mu.Unlock()
-
 	data := eventCbData{
 		rec: rec,
 		buf: pr.eventHeader,
 	}
 
-	err := pr.Reader.ReadData(readRecord, data)
-	return err
+	return pr.Reader.ReadData(readRecord, data)
 }
 
 // Pause stops all notifications from this Reader.
