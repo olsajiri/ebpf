@@ -182,7 +182,6 @@ func NewReaderWithOptions(array *ebpf.Map, perCPUBuffer int, opts ReaderOptions)
 	}
 
 	var (
-		fds      []int
 		nCPU     = int(array.MaxEntries())
 		rings    = make([]*perfEventRing, 0, nCPU)
 		pauseFds = make([]int, 0, nCPU)
@@ -196,9 +195,6 @@ func NewReaderWithOptions(array *ebpf.Map, perCPUBuffer int, opts ReaderOptions)
 	defer func() {
 		if err != nil {
 			poller.Close()
-			for _, fd := range fds {
-				unix.Close(fd)
-			}
 			for _, ring := range rings {
 				if ring != nil {
 					ring.Close()
