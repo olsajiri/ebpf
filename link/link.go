@@ -44,6 +44,8 @@ type Link interface {
 
 	// Prevent external users from implementing this interface.
 	isLink()
+
+	Extra() (interface{}, error)
 }
 
 // NewLinkFromFD creates a link from a raw fd.
@@ -333,4 +335,8 @@ func (l *RawLink) Info() (*Info, error) {
 		ebpf.ProgramID(info.ProgId),
 		extra,
 	}, nil
+}
+
+func (l *RawLink) Extra() (interface{}, error) {
+	return nil, fmt.Errorf("can't get raw link extra: %w", ErrNotSupported)
 }

@@ -120,6 +120,10 @@ func (pl *perfEventLink) Update(prog *ebpf.Program) error {
 	return fmt.Errorf("perf event link update: %w", ErrNotSupported)
 }
 
+func (pl *perfEventLink) Extra() (interface{}, error) {
+	return pl.pe.fd, nil
+}
+
 // perfEventIoctl implements Link and handles the perf event lifecycle
 // via ioctl().
 type perfEventIoctl struct {
@@ -152,6 +156,10 @@ func (pi *perfEventIoctl) Unpin() error {
 
 func (pi *perfEventIoctl) Info() (*Info, error) {
 	return nil, fmt.Errorf("perf event ioctl info: %w", ErrNotSupported)
+}
+
+func (pi *perfEventIoctl) Extra() (interface{}, error) {
+	return pi.fd, nil
 }
 
 // attach the given eBPF prog to the perf event stored in pe.

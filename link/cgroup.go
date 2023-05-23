@@ -169,6 +169,10 @@ func (cg *progAttachCgroup) Info() (*Info, error) {
 	return nil, fmt.Errorf("can't get cgroup info: %w", ErrNotSupported)
 }
 
+func (cg *progAttachCgroup) Extra() (interface{}, error) {
+	return nil, fmt.Errorf("can't get cgroup extra: %w", ErrNotSupported)
+}
+
 type linkCgroup struct {
 	RawLink
 }

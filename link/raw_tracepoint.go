@@ -76,6 +76,10 @@ func (frt *simpleRawTracepoint) Info() (*Info, error) {
 	return nil, fmt.Errorf("can't get raw_tracepoint info: %w", ErrNotSupported)
 }
 
+func (frt *simpleRawTracepoint) Extra() (interface{}, error) {
+	return nil, fmt.Errorf("can't get raw_tracepoint extra: %w", ErrNotSupported)
+}
+
 type rawTracepoint struct {
 	RawLink
 }
