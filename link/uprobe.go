@@ -162,6 +162,48 @@ func (ex *Executable) load(f *internal.SafeELFFile) error {
 // address calculates the address of a symbol in the executable.
 //
 // opts must not be nil.
+func (ex *Executable) addressMulti(symbols []string) ([]uint64, error) {
+	var err error
+	ex.addressesOnce.Do(func() {
+		var f *internal.SafeELFFile
+		f, err = internal.OpenSafeELFFile(ex.path)
+		if err != nil {
+			err = fmt.Errorf("parse ELF file: %w", err)
+			return
+		}
+		defer f.Close()
+
+		err = ex.load(f)
+	})
+	if err != nil {
+		return []uint64{0}, fmt.Errorf("lazy load symbols: %w", err)
+	}
+
+	var addresses []uint64
+	for _, symbol := range symbols {
+		address, ok := ex.addresses[symbol]
+		if !ok {
+			return []uint64{0}, fmt.Errorf("symbol %s: %w", symbol, ErrNoSymbol)
+		}
+
+		// Symbols with location 0 from section undef are shared library calls and
+		// are relocated before the binary is executed. Dynamic linking is not
+		// implemented by the library, so mark this as unsupported for now.
+		//
+		// Since only offset values are stored and not elf.Symbol, if the value is 0,
+		// assume it's an external symbol.
+		if address == 0 {
+			return []uint64{0}, fmt.Errorf("cannot resolve %s library call '%s': %w "+
+				"(consider providing UprobeOptions.Address)", ex.path, symbol, ErrNotSupported)
+		}
+		addresses = append(addresses, address)
+	}
+	return addresses, nil
+}
+
+// address calculates the address of a symbol in the executable.
+//
+// opts must not be nil.
 func (ex *Executable) address(symbol string, opts *UprobeOptions) (uint64, error) {
 	if opts.Address > 0 {
 		return opts.Address + opts.Offset, nil
