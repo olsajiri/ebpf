@@ -103,6 +103,6 @@ testdata/loader-%-eb.elf: testdata/loader.c
 	$(STRIP) -g $@
 
 .PHONY: update-kernel-deps
-update-kernel-deps: export KERNEL_VERSION?=6.6
+update-kernel-deps: export KERNEL_VERSION?=6.6 KERNEL_LOCAL?=
 update-kernel-deps:
 	./testdata/sh/update-kernel-deps.sh
