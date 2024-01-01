@@ -575,6 +575,7 @@ import (
 		{"struct_ops", "struct_ops"},
 		{"netfilter", "netfilter"},
 		{"kprobe_multi", "kprobe_multi"},
+		{"uprobe_multi", "uprobe_multi"},
 		{"perf_event", "perf_event"},
 		{"tcx", "tcx"},
 	})
