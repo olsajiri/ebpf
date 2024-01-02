@@ -37,6 +37,9 @@ type KprobeMultiOptions struct {
 	// Each Cookie is assigned to the Symbol or Address specified at the
 	// corresponding slice index.
 	Cookies []uint64
+
+	// reentry local
+	ReentryLocal bool
 }
 
 // KprobeMulti attaches the given eBPF program to the entry point of a given set
@@ -48,7 +51,11 @@ type KprobeMultiOptions struct {
 //
 // Requires at least Linux 5.18.
 func KprobeMulti(prog *ebpf.Program, opts KprobeMultiOptions) (Link, error) {
-	return kprobeMulti(prog, opts, 0)
+	flags := uint32(0)
+	if opts.ReentryLocal {
+		flags = unix.BPF_F_KPROBE_MULTI_REENTRY_LOCAL
+	}
+	return kprobeMulti(prog, opts, flags)
 }
 
 // KretprobeMulti attaches the given eBPF program to the return point of a given
