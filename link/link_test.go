@@ -16,6 +16,8 @@ import (
 	"github.com/cilium/ebpf/internal/unix"
 
 	"github.com/go-quicktest/qt"
+
+	system "golang.org/x/sys/unix"
 )
 
 func TestMain(m *testing.M) {
@@ -285,6 +287,21 @@ func testLink(t *testing.T, link Link, prog *ebpf.Program) {
 				qt.Assert(t, qt.IsTrue(ok))
 				// NB: We don't check that missed is actually correct
 				// since it's not easy to trigger from tests.
+			}
+		case sys.BPF_LINK_TYPE_PERF_EVENT:
+			// test default Info data
+			pevent := info.PerfEvent()
+			switch pevent.Type {
+			case system.BPF_PERF_EVENT_KPROBE, system.BPF_PERF_EVENT_KRETPROBE:
+				kp := pevent.Kprobe()
+				if addr, ok := kp.Address(); ok {
+					qt.Assert(t, qt.Not(qt.Equals(addr, 0)))
+
+					_, ok := kp.Missed()
+					qt.Assert(t, qt.IsTrue(ok))
+					// NB: We don't check that missed is actually correct
+					// since it's not easy to trigger from tests.
+				}
 			}
 		}
 	})
