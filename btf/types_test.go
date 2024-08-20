@@ -174,7 +174,6 @@ func TestType(t *testing.T) {
 			}
 		},
 		func() Type { return &Float{} },
-		func() Type { return &declTag{Type: &Void{}} },
 		func() Type { return &TypeTag{Type: &Void{}} },
 		func() Type { return &cycle{&Void{}} },
 	}
@@ -213,7 +212,7 @@ func TestType(t *testing.T) {
 
 func TestTagMarshaling(t *testing.T) {
 	for _, typ := range []Type{
-		&declTag{&Struct{Members: []Member{}}, "foo", -1},
+		&Struct{Members: []Member{}, Tags: []string{"foo"}},
 		&TypeTag{&Int{}, "foo"},
 	} {
 		t.Run(fmt.Sprint(typ), func(t *testing.T) {
