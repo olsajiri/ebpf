@@ -9,6 +9,9 @@ env:
   TMPDIR: /tmp
   CI_MAX_KERNEL_VERSION: '7.1'
   CI_MAX_EFW_VERSION: '1.0.0-rc2'
+  # tracing_multi is exercised by mainline, but isn't available in the latest
+  # stable CI kernel yet. Remove these exceptions when updating to Linux 7.2.
+  EBPF_TEST_IGNORE_VERSION: 'TestHaveBPFLinkTracingMulti,TestTracingMulti,TestTracingMultiInput'
   CI_MIN_CLANG_VERSION: '13'
   go_version: '~1.26'
   prev_go_version: '~1.25'
@@ -200,7 +203,7 @@ jobs:
     runs-on: ubuntu-24.04-arm64
     timeout-minutes: 15
     env:
-      EBPF_TEST_IGNORE_VERSION: 'TestHaveProgramType/LircMode2'
+      EBPF_TEST_IGNORE_VERSION: 'TestHaveProgramType/LircMode2,TestHaveBPFLinkTracingMulti,TestTracingMulti,TestTracingMultiInput'
     steps:
       - uses: actions/checkout@v7
 
